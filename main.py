@@ -16,7 +16,7 @@ ICON = 'rsc/icon.png'
 
 class TimedAlert:
     def __init__(self):
-        self.logPrint('Press Ctrl+C to exit.')
+        self.logPrint('[Press Ctrl+C to exit.]')
 
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -65,7 +65,7 @@ class TimedAlert:
             ' notification sent.'))
 
     def logPrint(self, value: str) -> None:
-        # 2021-08-10 19:25:00
+        # 2021-08-10 19:25:00 {value}
         print(f'{dt.now().strftime("%Y-%m-%d %H:%M:%S")} {value}')
 
     def refactorTimer(self, timers: dict) -> dict:
@@ -77,7 +77,7 @@ class TimedAlert:
                 action = dt.strptime(timer, '%H:%M')
                 actionTime = dttime(action.hour, action.minute)
                 actionTimeDT[name] = dt.combine(dt.now(), actionTime)
-            self.logPrint('Read successfully')
+            self.logPrint('Read successful.')
         except ValueError:
             self.logPrint('Timer section set incorrectly.')
 
@@ -113,14 +113,13 @@ class TimedAlert:
                 timer[1], self.notify,
                 kwargs={'timerName': timer[0], 'reminder': timer[2]})
 
-        print('\n' + self.scheduler)
-
         try:
             while True:
                 if self.timersLeft > 0:
                     self.scheduler.exec_jobs()
                     time.sleep(1)
                 else:
+                    self.logPrint('No more jobs left.')
                     break
         except KeyboardInterrupt:
             self.logPrint('Ctrl+C pressed.')

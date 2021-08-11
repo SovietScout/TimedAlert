@@ -1,2 +1,2 @@
-notify-py
-scheduler
+notify-py==0.3.3
+scheduler==0.6.1
