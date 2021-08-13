@@ -1,5 +1,4 @@
 import sys
-import time
 import argparse
 import configparser
 from datetime import datetime as dt
@@ -7,7 +6,8 @@ from datetime import timedelta
 from datetime import time as dttime
 
 from notifypy import Notify
-from scheduler import Scheduler
+
+from timerScheduler import TimerScheduler
 
 
 NAME = 'Timed Alert'
@@ -21,7 +21,7 @@ class TimedAlert:
         parser = argparse.ArgumentParser()
         parser.add_argument(
             '-c', '--config', nargs='?', default='config.ini',
-            help='Name of config file to read from')
+            help='Path to the config file you wish to use.')
 
         args = parser.parse_args()
         cfgFile = args.config
@@ -42,7 +42,7 @@ class TimedAlert:
             self.logPrint(
                 f'{cfgFile} is either missing or has been set incorrectly.')
 
-        self.scheduler = Scheduler()
+        self.scheduler = TimerScheduler()
 
         self.notification = Notify(
             default_notification_application_name=NAME,
@@ -110,18 +110,11 @@ class TimedAlert:
 
         # timer[0] = Name, [1] = dtObject, [2] = reminder
         for timer in schedule:
-            self.scheduler.once(
-                timer[1], self.notify,
-                kwargs={'timerName': timer[0], 'reminder': timer[2]})
+            self.scheduler.schedule(
+                timer[1], self.notify, timer[0], timer[2])
 
         try:
-            while True:
-                if self.timersLeft > 0:
-                    self.scheduler.exec_jobs()
-                    time.sleep(1)
-                else:
-                    self.logPrint('No more jobs left.')
-                    break
+            self.scheduler.start()
         except KeyboardInterrupt:
             self.logPrint('Ctrl+C pressed.')
         finally:
