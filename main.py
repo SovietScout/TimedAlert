@@ -16,7 +16,7 @@ ICON = 'rsc/icon.png'
 
 class TimedAlert:
     def __init__(self):
-        self.logPrint('[Press Ctrl+C to exit.]')
+        self.logPrint('[Press Ctrl+C to exit]')
 
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -59,10 +59,10 @@ class TimedAlert:
             self.notification.message = self.mf.format(timerKey=timerName)
 
         self.notification.send(block=False)
+
         self.timersLeft -= 1
-        self.logPrint((
-            f'{timerName} - {"Reminder" if reminder else "Alert"}'
-            ' notification sent.'))
+        self.logPrint((f'{timerName} - {"Reminder" if reminder else "Alert"}'
+                       ' notification sent.'))
 
     def logPrint(self, value: str) -> None:
         # 2021-08-10 19:25:00 {value}
@@ -108,6 +108,7 @@ class TimedAlert:
 
         self.timersLeft = len(schedule)
 
+        # timer[0] = Name, [1] = dtObject, [2] = reminder
         for timer in schedule:
             self.scheduler.once(
                 timer[1], self.notify,
@@ -131,5 +132,3 @@ class TimedAlert:
 if __name__ == "__main__":
     alert = TimedAlert()
     alert.run()
-    # TODO change app icon [Notify-py does not support it]
-    # TODO add QoL features like time until next notification, etc.
