@@ -14,4 +14,4 @@ By default, it uses `config.ini`. You may use other configs with it using the `-
 python main.py -c {path/to/config}
 ```
 
-Configs may be of any file format but formatting should be maintained.
+Configs may be of any file format but formatting should be maintained. `Settings` section can be omitted
