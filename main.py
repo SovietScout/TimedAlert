@@ -4,11 +4,10 @@ import sched
 import argparse
 import configparser
 from datetime import datetime as dt
-from datetime import timedelta
 from datetime import time as dttime
+from datetime import timedelta
 
 from notifypy import Notify
-
 
 NAME = 'Timed Alert'
 ICON = 'rsc/icon.png'
@@ -50,9 +49,10 @@ class TimedAlert:
         # Load Timers
         try:
             self.timers = dict(config.items('Timers'))
+            print(self.timers)
         except configparser.NoSectionError:
             self.logPrint(f'Timers section absent in {cfgFile}')
-            self.logPrint('Exiting')
+            self.logPrint('Exiting...')
             sys.exit()
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
@@ -77,63 +77,57 @@ class TimedAlert:
 
         self.notification.send(block=False)
 
-        self.timersLeft -= 1
         self.logPrint((f'{timerName} - {"Reminder" if reminder else "Alert"}'
                        ' notification sent'))
 
-    def refactorTimer(self, timers: dict) -> dict:
-        # Converts time strings to DateTime Objects
-        actionTimeDT = {}
+    def refactorTimer(self) -> None:
+        # Replaces time strings to DateTime Objects
 
         try:
-            for name, timer in timers.items():
-                action = dt.strptime(timer, '%H:%M')
-                actionTime = dttime(action.hour, action.minute)
-                actionTimeDT[name] = dt.combine(dt.now(), actionTime)
+            for name, timer in self.timers.items():
+                time = dt.strptime(timer, '%H:%M')
+                timeDtObject = dttime(time.hour, time.minute)
+                self.timers[name] = dt.combine(dt.now(), timeDtObject)
             self.logPrint('Read successful')
         except ValueError:
             self.logPrint('Timer section set incorrectly')
 
-        return actionTimeDT
-
-    def generateSchedule(self, timers: dict) -> list:
+    def generateSchedule(self, timers: dict) -> tuple:
         # timer[0] = dtObject, [1] = name: str, [2] = reminder: bool
-        schedule = []
 
-        # Append Reminders
+        # Yield Reminders
         if self.remindBefore > 0:
             for name, timer in timers.items():
-                actionTime = timer - timedelta(minutes=self.remindBefore)
-                if actionTime > dt.now():
-                    reminder = (actionTime, name, True)
-                    schedule.append(reminder)
+                reminderTime = timer - timedelta(minutes=self.remindBefore)
+                if reminderTime > dt.now():
+                    reminder = (reminderTime, name, True)
+                    yield reminder
 
-        # Append Alerts
-        for name, timer in timers.items():
-            if timer > dt.now():
-                alert = (timer, name, False)
-                schedule.append(alert)
-
-        return schedule
+        # Yield Alerts
+        for name, alertTimer in timers.items():
+            if alertTimer > dt.now():
+                alert = (alertTimer, name, False)
+                yield alert
 
     def run(self) -> None:
-        rfTimers = self.refactorTimer(self.timers)
-        schedule = self.generateSchedule(rfTimers)
-
-        self.timersLeft = len(schedule)
+        self.refactorTimer()
+        schedule = self.generateSchedule(self.timers)
 
         self.logPrint('Schedule:')
 
-        for timer in schedule:
-            self.scheduler.enterabs(
-                timer[0].timestamp(), 1, self.notify, timer[1], timer[2]
-            )
+        while True:
+            try:
+                timer = next(schedule)
+                self.scheduler.enterabs(
+                    timer[0].timestamp(), 1, self.notify, (timer[1], timer[2]))
 
-            # {timerKey} {reminder/alert} at {dtObject timestamp}
-            print((
-                ' · '
-                f'{timer[1]} {"reminder" if timer[2] else "alert"}'
-                f' at {timer[0].strftime("%H:%M")}'))
+                print((
+                    ' · '
+                    f'{timer[1]} {"reminder" if timer[2] else "alert"} '
+                    f'at {timer[0].strftime("%H:%M")}'))
+
+            except StopIteration:
+                break
 
         try:
             self.scheduler.run()
