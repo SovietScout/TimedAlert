@@ -49,7 +49,6 @@ class TimedAlert:
         # Load Timers
         try:
             self.timers = dict(config.items('Timers'))
-            print(self.timers)
         except configparser.NoSectionError:
             self.logPrint(f'Timers section absent in {cfgFile}')
             self.logPrint('Exiting...')
@@ -92,26 +91,25 @@ class TimedAlert:
         except ValueError:
             self.logPrint('Timer section set incorrectly')
 
-    def generateSchedule(self, timers: dict) -> tuple:
+    def generateSchedule(self) -> tuple:
         # timer[0] = dtObject, [1] = name: str, [2] = reminder: bool
 
-        # Yield Reminders
-        if self.remindBefore > 0:
-            for name, timer in timers.items():
+        for name, timer in self.timers.items():
+            # Yield Reminders
+            if self.remindBefore > 0:
                 reminderTime = timer - timedelta(minutes=self.remindBefore)
                 if reminderTime > dt.now():
                     reminder = (reminderTime, name, True)
                     yield reminder
 
-        # Yield Alerts
-        for name, alertTimer in timers.items():
-            if alertTimer > dt.now():
-                alert = (alertTimer, name, False)
+            # Yield Alert
+            if timer > dt.now():
+                alert = (timer, name, False)
                 yield alert
 
     def run(self) -> None:
         self.refactorTimer()
-        schedule = self.generateSchedule(self.timers)
+        schedule = self.generateSchedule()
 
         self.logPrint('Schedule:')
 
