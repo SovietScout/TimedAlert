@@ -116,19 +116,14 @@ class TimedAlert:
 
         self.logPrint('Schedule:')
 
-        while True:
-            try:
-                timer = next(schedule)
-                self.scheduler.enterabs(
-                    timer[0].timestamp(), 1, self.notify, timer[1])
+        for timer in schedule:
+            self.scheduler.enterabs(
+                timer[0].timestamp(), 1, self.notify, timer[1])
 
-                print((
-                    ' | '
-                    f'{timer[1][0]} {"reminder" if timer[1][1] else "alert"} '
-                    f'at {timer[0].strftime("%H:%M")}'))
-
-            except StopIteration:
-                break
+            print((
+                ' | '
+                f'{timer[1][0]} {"reminder" if timer[1][1] else "alert"} '
+                f'at {timer[0].strftime("%H:%M")}'))
 
         try:
             self.scheduler.run()
